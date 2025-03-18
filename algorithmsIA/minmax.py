@@ -11,11 +11,11 @@ from obj.pion import *
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(parent_dir)
 # On va aussi définir une profondeur maximale standard de 6 (qu'on peut ensuite modifier selon les phases de jeu)
-# A changer 
+# A changer
 def min_max(gameBoard:othello.Plateau, profondeur, is_maximizing):
     """
     Fonction Min-Max pour le jeu d'Othello.
-    
+
     :param gameBoard: état actuel du plateau (grille)
     :param Profondeur: profondeur maximale de recherche
     :param is_maximizing: booléen, True si le joueur courant maximise
