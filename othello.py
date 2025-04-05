@@ -1,126 +1,18 @@
 
+import random
 from obj.pion import Pion
+from obj.plateau import *
 from algorithmsIA.minmax import *
 from algorithmsIA.alphabeta import *
 from algorithmsIA.fct_eval import *
 import copy
 
-class Plateau:
-    HEIGHT = 8  # Taille du plateau de Othello (8x8)
-    tableau = []
-    listblack = [[3, 4], [4, 3]]
-    listwhite = [[3, 3], [4, 4]]
-    total_pieces = 4
-    nb_coups= 0
 
-
-
-    def __init__(self):
-        # Création du plateau 8x8 initialisé avec -1 pour les cases vides
-        self.tableau = [[-1 for _ in range(self.HEIGHT)] for _ in range(self.HEIGHT)]
-        # Initialisation de la position de départ
-        self.tableau[3][3], self.tableau[4][4] = 0, 0  # Pions blancs au début
-        self.tableau[3][4], self.tableau[4][3] = 1, 1  # Pions noirs au début
-
-    def poser(self, pion, position):
-        """Place un pion sur le plateau et capture les pions adverses"""
-        # Vérifier que la position est vide avant de poser un pion
-        if self.tableau[position[0]][position[1]] == -1:  # Case vide
-            self.tableau[position[0]][position[1]] = pion.couleur  # Placer le pion
-            self.capturer_pions(pion.couleur, position)  # Capturer les pions adverses
-            self.nb_coups+= 1  # Mettre à jour le nombre de coups
-        else:
-            print("La case est déjà occupée, choix invalide.")  # Gérer une position déjà occupée
-
-
-    def capturer_pions(self, couleur, position):
-        """Capture les pions adverses en fonction du coup posé"""
-        directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-        adversaire = 1 - couleur  # Couleur de l'adversaire
-
-        # Pour chaque direction, vérifier s'il y a des pions adverses à capturer
-        for d in directions:
-            x, y = position[0], position[1]
-            pions_a_retourner = []
-            # Avancer dans la direction donnée tant qu'on rencontre des pions adverses
-            while True:
-                x, y = x + d[0], y + d[1]
-                if not (0 <= x < self.HEIGHT and 0 <= y < self.HEIGHT):  # Sortie de la grille
-                    break
-                if self.tableau[x][y] == adversaire:
-                    pions_a_retourner.append([x, y])
-                elif self.tableau[x][y] == couleur:
-                    # Si un pion de la même couleur est trouvé, on capture les pions entre
-                    if pions_a_retourner:  # Vérifier si des pions ont été trouvés avant
-                        for px, py in pions_a_retourner:
-                            self.tableau[px][py] = couleur
-                    break
-                else:
-                    break
-
-
-    def afficher_plateau(self, couleur):
-        """Affiche le plateau avec X pour noirs, O pour blancs, et . pour les cases vides"""
-        print("  ", end="")
-        for i in range(self.HEIGHT):
-            print(i, end=" ")
-        print()
-
-        for i in range(self.HEIGHT):
-            print(i, end=" ")  # Affichage de l'indice de ligne
-            for j in range(self.HEIGHT):
-                if self.tableau[i][j] == 1:
-                    print("X", end=" ")
-                elif self.tableau[i][j] == 0:
-                    print("O", end=" ")
-                elif [i, j] in self.position_jouable(couleur):
-                    print("?", end=" ")
-                else:
-                    print(".", end=" ")
-            print()
-        print("------------------")
-        print("nombre de coups :" + str(self.nb_coups))
-        print()
-
-
-# Tu peux stp ajouter le nbr de coup aussi, pour pouvoir implementer la heuristique mixte
-# car apres un nbr de coup on change la fonction d evaluation
-# T'as capté hh ?
-
-# Si jamais tu parles je t'entends pas mdr,
-
-    def position_jouable(self, couleur):
-        """Retourne une liste des positions jouables pour le joueur donné"""
-        directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
-        positions = []
-        adversaire = 1 - couleur  # Couleur de l'adversaire
-
-        # Parcourir toutes les cases vides
-        for x in range(self.HEIGHT):
-            for y in range(self.HEIGHT):
-                if self.tableau[x][y] == -1:  # Si la case est vide
-                    for d in directions:
-                        pions_a_retourner = []
-                        i, j = x, y
-                        # Avancer dans chaque direction pour vérifier si une capture est possible
-                        while True:
-                            i, j = i + d[0], j + d[1]
-                            if not (0 <= i < self.HEIGHT and 0 <= j < self.HEIGHT):
-                                break
-                            if self.tableau[i][j] == adversaire:  # Si on rencontre un pion adverse
-                                pions_a_retourner.append([i, j])
-                            elif self.tableau[i][j] == couleur:  # Si on rencontre un pion de la même couleur
-                                if pions_a_retourner:  # Il doit y avoir des pions à retourner
-                                    positions.append([x, y])  # Ajouter la position comme jouable
-                                break
-                            else:
-                                break
-        return positions
-
-
-
+# Pour le jeu humain vs IA, on suppose toujours que l'IA c'est le joueur blanc (couleur 0)
 
 class Jeu:
+    gagnant = None # Variable qui prends la couleur du joueur qui a gagné la partie (prends -1 si egalité)
+
     def __init__(self):
         self.plateau = Plateau()  # Créer un plateau de jeu
         self.joueur_actuel = 0  # L'IA commence avec les blancs(0)
@@ -160,7 +52,7 @@ class Jeu:
 
         return best_move_found
 
-    def best_move_alpha_beta(plateau: othello.Plateau, profondeur: int):
+    def best_move_alpha_beta(plateau: othello.Plateau, profondeur: int, couleur: int, fct_eval):
         """
         Fonction pour trouver le meilleur coup à jouer pour l'IA (couleur 0)
         en utilisant l'algorithme Alpha-Beta .
@@ -172,41 +64,48 @@ class Jeu:
 
         best_score = float('-inf')
         best_move_found = None
-
-        # Parcourt tous les coups possibles pour l'IA (joueur 0)
-        for move in plateau.position_jouable(0):
+        best_moves_random = []
+        # Parcourt tous les coups possibles pour l'IA 
+        for move in plateau.position_jouable(couleur):
             new_board = copy.deepcopy(plateau)
-            pion_max = obj.pion.Pion(0, move)
+            pion_max = obj.pion.Pion(couleur, move)
             new_board.poser(pion_max, move)
 
             # Appel à la fonction alpha_beta
-            score = alpha_beta(new_board, profondeur - 1, float('-inf'), float('inf'), False)
+            score = alpha_beta(new_board, profondeur - 1, float('-inf'), float('inf'), False, couleur, fct_eval)
 
-            print(f"Test du coup {move} => score obtenu : {score}")
+            #print(f"Test du coup {move} => score obtenu : {score}")
+
+            
 
             if score > best_score:
                 best_score = score
-                best_move_found = move
+                best_moves_random = [move]
+            elif score == best_score: # Pour le cas ou il y'a plusieurs mouvements avec le meme score
+                best_moves_random.append(move)
 
-        print(f"Meilleur coup choisi par Alpha-Beta : {best_move_found} avec un score de {best_score}")
+       # print(f"Meilleur coup choisi par Alpha-Beta : {best_move_found} avec un score de {best_score}")
+        if best_moves_random: 
+            return random.choice(best_moves_random)
+        else:
+            return None
 
-        return best_move_found
 
 
 
-
-    def jouer_ia(self):
+    def jouer_ia(self, couleur, fct_eval):
         # ICI c'est best_move_alpha_beta utilisé à modifier selon la strat choisie
-        position_jouable = Jeu.best_move_alpha_beta(self.plateau, 4)
-        print("IA joue actuellement...")
+        position_jouable = Jeu.best_move_alpha_beta(self.plateau, 4, couleur, fct_eval)
+        #print("IA joue actuellement...")
         if position_jouable:
             self.jouer(position_jouable)
-            print("IA prend la position :", position_jouable)
+            #print("IA prend la position :", position_jouable)
         else:
-            print("IA n'a pas trouvé de positions")
+            #print("IA n'a pas trouvé de positions")
             self.changer_joueur()
 
-    def jouer_partie(self):
+    # Fonction pour jouer une partie avec un humain 
+    def jouer_partie(self, fct_evalIA):
         """Boucle principale du jeu"""
         while not self.partie_terminee():
             self.plateau.afficher_plateau(self.joueur_actuel)
@@ -215,16 +114,49 @@ class Jeu:
                 x, y = map(int, input("Choisissez une position (x y): ").split())
                 self.jouer([x, y])
             else:  # IA
-                self.jouer_ia()
+                self.jouer_ia(0, fct_evalIA)
 
         print("La partie est terminée.")
         self.plateau.afficher_plateau(-1)
+
+    # Fonction pour jouer une partie avec 2 IA 
+    # Retourne le gagnant (0,1 ou 2) valeur qui sera utilisée comme indice 
+    def jouer_partieIA(self, fct_evalIA1, fct_evalIA2):
+        """Fonction pour jouer une partie avec 2 IA dont choisit les fonctions d'évaluations
+         et qui retourne le gagnant sous forme d'entier qui servira d'indice pour le mini-tournoi """
+        while not self.partie_terminee():
+            #self.plateau.afficher_plateau(self.joueur_actuel)
+
+            # On fait jouer les 2 IAs 
+            if self.joueur_actuel == 1:
+                #print("IA 1")
+                self.jouer_ia(1, fct_evalIA1)
+            else:
+                #print("IA 2")
+                self.jouer_ia(0, fct_evalIA2)
+        print("la partie est terminée")
+        nbr_pieces = self.plateau.retourner_nbr_pieces_black_white()
+        print("Voici le resultat, Noirs : ", nbr_pieces[0], "Blancs : ", nbr_pieces[1])
+        # On determine ici le gagnant de la partie entre IA 1 et IA 2 pour pouvoir faire des comparatifs 
+        if nbr_pieces[0] > nbr_pieces[1]:
+            self.gagnant = 0
+        elif nbr_pieces[0] < nbr_pieces[1]:
+            self.gagnant = 1
+        else: # egalite
+            self.gagnant = 2
+
+        # On retourne le gagnant entre les 2 pour pouvoir comparer 
+        return self.gagnant
+
+
+
 
 def main():
     jeu = Jeu()
     print("Ca commence")
     jeu.plateau.afficher_plateau(0)
-    jeu.jouer_partie()
+    #jeu.jouer_partie()
+    jeu.jouer_partieIA(positionnel, positionnel)
 
 
 # Pour pouvoir importer le module sans executer tout le code

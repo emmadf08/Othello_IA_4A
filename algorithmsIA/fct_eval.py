@@ -14,7 +14,7 @@
 # N-B: IL FAUT CONVERTIR LA POSITION EN TUPLE AVANT DE L'UTILISER POUR CETTE FCT
 
 # On calcule la difference de poids entre la position des noirs et celle des blancs
-def positionnel(game_board):
+def positionnel(game_board, dummy_couleur):
     # La grille des poids des positions 
     grid = {
         (0, 0): 500,  (0, 1): -150, (0, 2): 30,  (0, 3): 10,  (0, 4): 10,  (0, 5): 30,  (0, 6): -150, (0, 7): 500,
@@ -46,9 +46,10 @@ def positionnel(game_board):
 # Prend en compte la difference du nombre de pions entre chaque joueur
 # La différence dans notre cas est le nbr de pions noir - blanc
 # Donc plus cette différence est croissante dans le sens positif, plus le mouvement est meilleur pour l'adversaire (pas IA)
-def absolu(game_board):
+def absolu(game_board, dummy_couleur):
     
-    score_abs = len(game_board.listblack) - len(game_board.listwhite)
+    nbr_pieces = game_board.retourner_nbr_pieces_black_white()
+    score_abs = nbr_pieces[0] - nbr_pieces[1]
     return score_abs
 
 
@@ -60,11 +61,8 @@ def absolu(game_board):
 # Concretement, on essaie de regarder la taille du tableau des positions jouables et on regarde les différents 
 # résultat pour chaque mouvement
 
-# Retourne le nbr de positions jouables pour les 2 joueurs 
-# Si jamais y'a un corner dans les positions qu'on peut jouer on l'indique
+# Retourne un score calculé sur la base de ces données (puisqu'on veut influencer la prise de coins, on ajoute 100)
 
-# retourne un tableau [nbr_position_noir, nbr_position_blanc, isCorner] avec isCorner un boolean pour savoir si y'a un corner
-# Dans les positions à joueur
 
 def mobilite(game_board, couleur_joueur):
 
@@ -78,6 +76,11 @@ def mobilite(game_board, couleur_joueur):
         if e == [0,0] or e == [7,0] or e == [0,7] or e == [7,7]:
             isCorner = True
     
-    score_mobilite = [len(positions_joueur), len(positions_adversaire), isCorner]
+    if isCorner:
+        score_mobilite = len(positions_joueur) - len(positions_adversaire) + 100
+    else:
+        score_mobilite = len(positions_joueur) - len(positions_adversaire)
+    
+    
 
     return score_mobilite
