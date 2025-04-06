@@ -15,6 +15,7 @@ Ce projet vise à développer une IA pour jouer au jeu d'Othello contre un joueu
 - **Mobilité** : Évalue la capacité de l'IA à avoir un grand nombre de coups disponibles.
 - **Différence de score** : Évalue la différence entre le nombre de pions du joueur et de l’adversaire.
 - **Heuristique positionnelle** : Utilisation d’une grille pondérée pour évaluer l’importance des positions sur le plateau.
+- **Mixte** :  Stratégie qui combine les 3 selon les phases de jeu 
 
 ## Validation et Résultats
 
