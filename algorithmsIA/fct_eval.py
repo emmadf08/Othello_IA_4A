@@ -84,3 +84,24 @@ def mobilite(game_board, couleur_joueur):
     
 
     return score_mobilite
+
+
+
+# Stratégie de recherche mixte 
+def mixte(game_board, couleur_joueur):
+    
+    score = 0
+    # On utilise les différentes stratégies à differentes phases de jeu 
+    if game_board.nb_coups <= 25:
+        # On utilise la stratégie positionnel 
+        score = positionnel(game_board, couleur_joueur)
+
+    elif game_board.nb_coups > 25 and game_board.nb_coups <= 45:
+        # On utilise la strategie de mobilite pour la phase du milie 
+        score = mobilite(game_board, couleur_joueur)
+
+    elif game_board.nb_coups > 45:
+        # On utilise la strategie absolu pour le end game
+        score = absolu(game_board, couleur_joueur)
+
+    return score

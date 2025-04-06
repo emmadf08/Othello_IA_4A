@@ -12,6 +12,7 @@ import copy
 
 class Jeu:
     gagnant = None # Variable qui prends la couleur du joueur qui a gagné la partie (prends -1 si egalité)
+    nb_coups = 0
 
     def __init__(self):
         self.plateau = Plateau()  # Créer un plateau de jeu
@@ -27,6 +28,7 @@ class Jeu:
         if position in self.plateau.position_jouable(self.joueur_actuel):
             pion = Pion(self.joueur_actuel, position)
             self.plateau.poser(pion, position)
+            self.nb_coups = self.nb_coups + 1
             self.changer_joueur()
         else:
             print("Coup invalide, choisissez une position jouable.")
